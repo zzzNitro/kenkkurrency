@@ -14,7 +14,7 @@ func main() {
 
 	err := godotenv.Load("keychain.env")
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("No .env file")
 	}
 	// Load the API key from environment variables
 	weatherKey := os.Getenv("WEATHER_API_KEY")
