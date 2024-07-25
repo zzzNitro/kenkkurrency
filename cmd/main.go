@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -16,19 +15,16 @@ func main() {
 	if err != nil {
 		log.Println("No .env file")
 	}
-	// Load the API key from environment variables
-	weatherKey := os.Getenv("WEATHER_API_KEY")
-	if weatherKey == "" {
-		log.Fatal("WEATHER_API_KEY environment variable is not set")
-	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		log.Fatal("$PORT must be set")
 	}
 
-	http.HandleFunc("/ping", handler) // define your handler
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	weatherKey := os.Getenv("WEATHER_API_KEY")
+	if weatherKey == "" {
+		log.Fatal("WEATHER_API_KEY environment variable is not set")
+	}
 
 	// Initialize the weather repository with the API key
 	weatherRepo := repository.NewApiRepository(weatherKey)
@@ -37,18 +33,19 @@ func main() {
 	usecase := usecase.NewUsecase(weatherRepo)
 
 	// Define routes for each concurrency demonstration
-	http.HandleFunc("/api/control", usecase.HandleControl)
-	http.HandleFunc("/api/waitgroup", usecase.HandleWaitGroup)
-	http.HandleFunc("/api/channels", usecase.HandleChannels)
-	http.HandleFunc("/api/mutex", usecase.HandleMutexes)
+	http.HandleFunc("/api/weather/control", usecase.HandleControl)
+	http.HandleFunc("/api/weather/waitgroup", usecase.HandleWaitGroup)
+	http.HandleFunc("/api/weather/channels", usecase.HandleChannels)
+	http.HandleFunc("/api/weather/mutex", usecase.HandleMutexes)
 
 	// Start the HTTP server
-	log.Printf("Server starting on port :%s...", port)
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil); err != nil {
+	log.Println("Server starting on port :", port)
+	// log.Println("Server starting on port :8080...")
+
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal("Server failed to start: ", err)
 	}
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
+	// if err := http.ListenAndServe(":8080", nil); err != nil {
+	// 	log.Fatal("Server failed to start: ", err)
+	// }
 }
