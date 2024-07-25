@@ -1,5 +1,13 @@
 package repository
 
+// NewsRepository is the interface for fetching news data
+type NewsRepository interface {
+	GetNewsByCity(city string) ([]NewsData, error)
+	GetNewsByCityWG(city string) ([]NewsData, error)
+	GetNewsByCityChan(city string) ([]NewsData, error)
+	GetNewsByCityMx(city string) ([]NewsData, error)
+}
+
 // WeatherRepository is the interface that wraps the GetWeatherByCity method
 type WeatherRepository interface {
 	GetWeatherByCity(city string) (WeatherData, error)
@@ -36,4 +44,17 @@ type WeatherData struct {
 	IconURL    string
 	WindKPH    float64
 	FeelsLikeC float64
+}
+
+// NewsData represents the structured format of news articles
+type NewsData struct {
+	ID          string   `json:"id"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	URL         string   `json:"url"`
+	Author      string   `json:"author"`
+	Image       string   `json:"image"`
+	Language    string   `json:"language"`
+	Category    []string `json:"category"`
+	Published   string   `json:"published"`
 }

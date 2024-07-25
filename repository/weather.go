@@ -64,18 +64,19 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sync"
 )
 
-type apiRepository struct {
+type weatherRepository struct {
 	apiKey string
 }
 
-func NewApiRepository(apiKey string) WeatherRepository {
-	return &apiRepository{apiKey: apiKey}
+func NewWeatherRepository(apiKey string) WeatherRepository {
+	return &weatherRepository{apiKey: apiKey}
 }
 
 // GetWeatherByCity fetches weather data sequentially
-func (repo *apiRepository) GetWeatherByCity(city string) (WeatherData, error) {
+func (repo *weatherRepository) GetWeatherByCity(city string) (WeatherData, error) {
 	log.Println("Fetching weather data for city: ", city)
 	url := fmt.Sprintf("https://weatherapi-com.p.rapidapi.com/current.json?q=%s", city)
 	req, err := http.NewRequest("GET", url, nil)
@@ -132,18 +133,145 @@ func (repo *apiRepository) GetWeatherByCity(city string) (WeatherData, error) {
 	}, nil
 }
 
-// Placeholder for other methods - implement concurrency patterns here
-func (repo *apiRepository) GetWeatherByCityWG(city string) (WeatherData, error) {
-	// Implement using sync.WaitGroup
-	return WeatherData{}, nil
+func (repo *weatherRepository) GetWeatherByCityWG(city string) (WeatherData, error) {
+	var wg sync.WaitGroup
+	var result WeatherData
+	var finalError error
+
+	wg.Add(1) // Assuming future extension where more concurrent operations might be added
+	go func() {
+		defer wg.Done()
+
+		log.Println("Fetching weather data for city: ", city)
+		url := fmt.Sprintf("https://weatherapi-com.p.rapidapi.com/current.json?q=%s", city)
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			finalError = err
+			return
+		}
+
+		req.Header.Set("x-rapidapi-host", "weatherapi-com.p.rapidapi.com")
+		req.Header.Set("x-rapidapi-key", repo.apiKey)
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			finalError = err
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			finalError = err
+			return
+		}
+
+		var response struct {
+			Location struct {
+				Name    string `json:"name"`
+				Region  string `json:"region"`
+				Country string `json:"country"`
+			} `json:"location"`
+			Current struct {
+				TempC     float64 `json:"temp_c"`
+				Condition struct {
+					Text string `json:"text"`
+					Icon string `json:"icon"`
+				} `json:"condition"`
+				WindKPH    float64 `json:"wind_kph"`
+				FeelsLikeC float64 `json:"feelslike_c"`
+			} `json:"current"`
+		}
+
+		if err := json.Unmarshal(body, &response); err != nil {
+			finalError = err
+			return
+		}
+
+		result = WeatherData{
+			City:       response.Location.Name,
+			Region:     response.Location.Region,
+			Country:    response.Location.Country,
+			TempC:      response.Current.TempC,
+			Condition:  response.Current.Condition.Text,
+			IconURL:    fmt.Sprintf("https:%s", response.Current.Condition.Icon),
+			WindKPH:    response.Current.WindKPH,
+			FeelsLikeC: response.Current.FeelsLikeC,
+		}
+	}()
+
+	wg.Wait() // Wait for all goroutines to complete
+	return result, finalError
 }
 
-func (repo *apiRepository) GetWeatherByCityChan(city string) (WeatherData, error) {
-	// Implement using channels
-	return WeatherData{}, nil
+func (repo *weatherRepository) GetWeatherByCityChan(city string) (WeatherData, error) {
+	resultChan := make(chan WeatherData)
+	errorChan := make(chan error)
+
+	go func() {
+		log.Println("Fetching weather data for city: ", city)
+		url := fmt.Sprintf("https://weatherapi-com.p.rapidapi.com/current.json?q=%s", city)
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			errorChan <- err
+			return
+		}
+
+		req.Header.Set("x-rapidapi-host", "weatherapi-com.p.rapidapi.com")
+		req.Header.Set("x-rapidapi-key", repo.apiKey)
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			errorChan <- err
+			return
+		}
+		defer resp.Body.Close()
+
+		var response struct {
+			Location struct {
+				Name    string `json:"name"`
+				Region  string `json:"region"`
+				Country string `json:"country"`
+			} `json:"location"`
+			Current struct {
+				TempC     float64 `json:"temp_c"`
+				Condition struct {
+					Text string `json:"text"`
+					Icon string `json:"icon"`
+				} `json:"condition"`
+				WindKPH    float64 `json:"wind_kph"`
+				FeelsLikeC float64 `json:"feelslike_c"`
+			} `json:"current"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+			errorChan <- err
+			return
+		}
+
+		resultChan <- WeatherData{
+			City:       response.Location.Name,
+			Region:     response.Location.Region,
+			Country:    response.Location.Country,
+			TempC:      response.Current.TempC,
+			Condition:  response.Current.Condition.Text,
+			IconURL:    fmt.Sprintf("https:%s", response.Current.Condition.Icon),
+			WindKPH:    response.Current.WindKPH,
+			FeelsLikeC: response.Current.FeelsLikeC,
+		}
+	}()
+
+	select {
+	case result := <-resultChan:
+		return result, nil
+	case err := <-errorChan:
+		return WeatherData{}, err
+	}
 }
 
-func (repo *apiRepository) GetWeatherByCityMx(city string) (WeatherData, error) {
+func (repo *weatherRepository) GetWeatherByCityMx(city string) (WeatherData, error) {
 	// Implement using mutexes
 	return WeatherData{}, nil
 }

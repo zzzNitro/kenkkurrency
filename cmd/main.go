@@ -26,14 +26,20 @@ func main() {
 		log.Fatal("WEATHER_API_KEY environment variable is not set")
 	}
 
-	weatherRepo := repository.NewApiRepository(weatherKey)
+	newsKey := os.Getenv("CURRENTS_API_KEY")
+	if newsKey == "" {
+		log.Fatal("CURRENTS_API_KEY environment variable is not set")
+	}
 
-	usecase := usecase.NewUsecase(weatherRepo)
+	weatherRepo := repository.NewWeatherRepository(weatherKey)
+	newsRepo := repository.NewNewsRepository(newsKey)
 
-	http.HandleFunc("/api/weather/control", usecase.HandleControl)
-	http.HandleFunc("/api/weather/waitgroup", usecase.HandleWaitGroup)
-	http.HandleFunc("/api/weather/channels", usecase.HandleChannels)
-	http.HandleFunc("/api/weather/mutex", usecase.HandleMutexes)
+	usecase := usecase.NewUsecase(weatherRepo, newsRepo)
+
+	http.HandleFunc("/api/control", usecase.HandleControl)
+	http.HandleFunc("/api/waitgroup", usecase.HandleWaitGroup)
+	http.HandleFunc("/api/channels", usecase.HandleChannels)
+	http.HandleFunc("/api/mutex", usecase.HandleMutexes)
 
 	log.Println("Server starting on port :", port)
 
