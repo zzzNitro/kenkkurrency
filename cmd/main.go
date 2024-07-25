@@ -12,14 +12,6 @@ import (
 )
 
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		log.Fatal("$PORT must be set")
-	}
-
-	http.HandleFunc("/ping", handler) // define your handler
-	log.Fatal(http.ListenAndServe(":"+port, nil))
-
 	err := godotenv.Load("keychain.env")
 	if err != nil {
 		log.Println("No .env file")
@@ -30,6 +22,14 @@ func main() {
 		log.Fatal("WEATHER_API_KEY environment variable is not set")
 	}
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		log.Fatal("$PORT must be set")
+	}
+
+	http.HandleFunc("/ping", handler) // define your handler
+	log.Fatal(http.ListenAndServe(":"+port, nil))
+
 	// Initialize the weather repository with the API key
 	weatherRepo := repository.NewApiRepository(weatherKey)
 
@@ -37,10 +37,10 @@ func main() {
 	usecase := usecase.NewUsecase(weatherRepo)
 
 	// Define routes for each concurrency demonstration
-	http.HandleFunc("/api/weather/control", usecase.HandleControl)
-	http.HandleFunc("/api/weather/waitgroup", usecase.HandleWaitGroup)
-	http.HandleFunc("/api/weather/channels", usecase.HandleChannels)
-	http.HandleFunc("/api/weather/mutex", usecase.HandleMutexes)
+	http.HandleFunc("/api/control", usecase.HandleControl)
+	http.HandleFunc("/api/waitgroup", usecase.HandleWaitGroup)
+	http.HandleFunc("/api/channels", usecase.HandleChannels)
+	http.HandleFunc("/api/mutex", usecase.HandleMutexes)
 
 	// Start the HTTP server
 	log.Printf("Server starting on port :%s...", port)
