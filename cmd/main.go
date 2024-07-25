@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -11,6 +12,13 @@ import (
 )
 
 func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		log.Fatal("$PORT must be set")
+	}
+
+	http.HandleFunc("/", handler) // define your handler
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 
 	err := godotenv.Load("keychain.env")
 	if err != nil {
@@ -35,8 +43,12 @@ func main() {
 	http.HandleFunc("/api/weather/mutex", usecase.HandleMutexes)
 
 	// Start the HTTP server
-	log.Println("Server starting on port :8080...")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	log.Printf("Server starting on port :%s...", port)
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil); err != nil {
 		log.Fatal("Server failed to start: ", err)
 	}
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 }
