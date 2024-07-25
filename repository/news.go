@@ -20,7 +20,11 @@ func NewNewsRepository(apiKey string) *newsRepository {
 // GetNewsByCity fetches news data for a specific city
 func (repo *newsRepository) GetNewsByCity(city string) ([]NewsData, error) {
 	url := fmt.Sprintf("https://api.currentsapi.services/v1/latest-news?language=es&apiKey=%s", repo.apiKey)
-	resp, err := http.Get(url)
+
+	// Trim line jumps and spaces from the URL
+	cleanURL := strings.TrimSpace(url)
+
+	resp, err := http.Get(cleanURL)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +52,11 @@ func (repo *newsRepository) GetNewsByCityWG(city string) ([]NewsData, error) {
 
 		log.Println("Fetching news data for city: ", city)
 		url := fmt.Sprintf("https://api.currentsapi.services/v1/latest-news?language=es&apiKey=%s", repo.apiKey)
-		resp, err := http.Get(url)
+
+		// Trim line jumps and spaces from the URL
+		cleanURL := strings.TrimSpace(url)
+
+		resp, err := http.Get(cleanURL)
 		if err != nil {
 			finalError = err
 			return
