@@ -26,26 +26,19 @@ func main() {
 		log.Fatal("WEATHER_API_KEY environment variable is not set")
 	}
 
-	// Initialize the weather repository with the API key
 	weatherRepo := repository.NewApiRepository(weatherKey)
 
-	// Create the usecase with the weather repository
 	usecase := usecase.NewUsecase(weatherRepo)
 
-	// Define routes for each concurrency demonstration
 	http.HandleFunc("/api/weather/control", usecase.HandleControl)
 	http.HandleFunc("/api/weather/waitgroup", usecase.HandleWaitGroup)
 	http.HandleFunc("/api/weather/channels", usecase.HandleChannels)
 	http.HandleFunc("/api/weather/mutex", usecase.HandleMutexes)
 
-	// Start the HTTP server
 	log.Println("Server starting on port :", port)
-	// log.Println("Server starting on port :8080...")
 
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal("Server failed to start: ", err)
 	}
-	// if err := http.ListenAndServe(":8080", nil); err != nil {
-	// 	log.Fatal("Server failed to start: ", err)
-	// }
+
 }
