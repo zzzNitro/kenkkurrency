@@ -17,7 +17,7 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 
-	http.HandleFunc("/", handler) // define your handler
+	http.HandleFunc("/ping", handler) // define your handler
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 
 	err := godotenv.Load("keychain.env")
