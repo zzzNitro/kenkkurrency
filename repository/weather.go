@@ -62,6 +62,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -75,6 +76,7 @@ func NewApiRepository(apiKey string) WeatherRepository {
 
 // GetWeatherByCity fetches weather data sequentially
 func (repo *apiRepository) GetWeatherByCity(city string) (WeatherData, error) {
+	log.Println("Fetching weather data for city: ", city)
 	url := fmt.Sprintf("https://weatherapi-com.p.rapidapi.com/current.json?q=%s", city)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

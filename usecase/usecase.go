@@ -20,6 +20,7 @@ func NewUsecase(weatherRepo repository.WeatherRepository) *Usecase {
 
 // HandleControl handles the API call sequentially with detailed validation
 func (uc *Usecase) HandleControl(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling Control request...")
 	city := r.URL.Query().Get("city")
 
 	// Step 1: Validate the city parameter
