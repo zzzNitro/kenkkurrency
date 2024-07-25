@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 )
 
@@ -77,7 +78,11 @@ func (repo *newsRepository) GetNewsByCityChan(city string) ([]NewsData, error) {
 
 	go func() {
 		url := fmt.Sprintf("https://api.currentsapi.services/v1/latest-news?language=es&apiKey=%s", repo.apiKey)
-		resp, err := http.Get(url)
+
+		// Trim line jumps and spaces from the URL
+		cleanURL := strings.TrimSpace(url)
+
+		resp, err := http.Get(cleanURL)
 		if err != nil {
 			errorChan <- err
 			return
